@@ -1,0 +1,16 @@
+resolver: lts-8.5
+
+system-ghc: true
+
+packages:
+  - '.'
+
+extra-deps:
+- hmatrix-0.18.1.0
+- hmatrix-gsl-0.18.0.1
+- hmatrix-special-0.4.0.1
+- hmatrix-glpk-0.6.0.0
+
+flags: {}
+
+extra-package-dbs: []
