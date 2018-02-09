@@ -32,63 +32,68 @@ class Ring r => EuclidRing r where
 class Num k => Field k where
   fRecip :: k -> Maybe k
 
-data F (p :: Nat) = KnownNat p => F (Proxy p) Integer
+newtype F (p :: Nat) = F Integer
+  deriving (Eq, Ord)
+
+--characteristic :: KnownNat p => F p -> Integer
+--characteristic = natVal
+
+mkF :: KnownNat p => Integer -> F p
+mkF n
+  | isPrime $ natVal r = r
+  | otherwise          = error "Required that p is prime."
+  where
+    r = F $ n `mod` natVal r
 
 instance  KnownNat p => Show (F p) where
-  show (F p m)
-    | isPrime p' = show $ m `mod` p' -- 素体（位数が素数）の時のみ値を返す
-    | otherwise  = undefined
-    where p' = natVal p
-
-instance KnownNat p => Eq (F p) where
-  F p m == F q n
-    | isPrime p' = (m - n) `mod` p' == 0
-    | otherwise  = undefined
-    where p' = natVal p
-
-instance KnownNat p => Ord (F p) where
-  compare (F p m) (F q n)
-    | isPrime p' = compare (m `mod` p') (n `mod` p')
-    | otherwise  = undefined    
-    where p' = natVal p
+  show (F m) = show m
 
 instance KnownNat p => Num (F p) where
-  (F p m) + (F q n) = F p $ m + n
-  (F p m) - (F q n) = F p $ m - n
-  (F p m) * (F q n) = F p $ m * n
-  negate (F p m)    = F p $ - m
-  abs               = id
-  signum (F p m)
-    | m == 0        = F p 0
-    | otherwise     = F p 1
-  fromInteger m     = let p = Proxy :: Proxy p
-                      in  F p $ m `mod` natVal p
+  (F m) + (F n) = mkF $ m + n
+  (F m) - (F n) = mkF $ m - n
+  (F m) * (F n) = mkF $ m * n
+  negate (F m)  = mkF $ - m
+  abs           = id
+  signum (F m)
+    | m == 0    = F 0
+    | otherwise = F 1
+  fromInteger   = mkF
 
 instance KnownNat p => Field (F p) where
-  fRecip (F p m)
-    | m `mod` p' == 0 = Nothing -- 0 の逆元は存在しない
-    | isPrime p'      = Just $ F p s
-    | otherwise       = Nothing
-    where (r, s, _) = eea m p'
-          p'        = natVal p
+  fRecip a@(F m)
+    | (mkF m :: F p) == 0 = Nothing
+    | isPrime p           = Just $ mkF s
+    | otherwise           = Nothing
+    where
+      (_, s, _) = eea m p
+      p = natVal a
 
 instance KnownNat p => Enum (F p) where
-  succ (F p m)     = F p $ succ m
-  pred (F p m)     = F p $ pred m
-  toEnum m         = F (Proxy :: Proxy p) $ toInteger m
-  fromEnum (F p m)
-    | isPrime p' = fromInteger $ m `mod` p'
-    | otherwise  = undefined    
-    where p' = natVal p
+  succ (F m)     = mkF $ succ m
+  pred (F m)     = mkF $ pred m
+  toEnum m       = mkF $ toInteger m
+  fromEnum a@(F m)
+    | isPrime p = fromInteger $ m `mod` p
+    | otherwise = undefined    
+    where
+      p = natVal a
 
+instance KnownNat p => Real (F p) where
+  toRational (F m) = toRational m
 
--- 型変換
-toF :: KnownNat p => Proxy p -> Integer -> F p
-toF p = fromInteger
-
--- 異なる位数の共存
---fieldList :: forall p. [F p]
---fieldList = [F (Proxy :: Proxy 5) 9, F (Proxy :: Proxy 7) 9]
+instance KnownNat p => Integral (F p) where
+  a@(F m) `quot` (F n)
+    | (mkF m :: F p) == 0 = undefined
+    | otherwise           = let (_, s, _) = eea n p
+                            in  mkF $ m * s
+    where
+      p = natVal a
+  rem _ _ = F 0
+  div = quot
+  mod _ _ = F 0
+  (F m) `quotRem` (F n) = ((F m) `quot` (F n), F 0)
+  divMod = quotRem
+  toInteger (F m) = m
 
 -- EEA
 eea :: (Integral m) => m -> m -> (m, m, m)
@@ -242,3 +247,24 @@ fibLog n = fst $ loop (n + 1)
                     in (b, a + b)
 
 -------------------------------------------------------------------------------------
+
+primes = [2..] \\ composites
+
+composites = mergeAll multiples
+
+multiples = [map (n *) [n..] | n <- [2..]]
+
+(x : xs) \\ (y : ys)
+  | x < y  = x : (xs \\ (y : ys))
+  | x == y = xs \\ ys
+  | x > y  = (x : xs) \\ ys
+
+merge :: Ord a => [a] -> [a] -> [a]
+merge (x : xs) (y : ys)
+  | x < y  = x : (merge xs (y : ys))
+  | x == y = merge xs ys
+  | x > y  = merge (x : xs) ys
+
+xmerge (x : xs) ys = x : merge xs ys
+
+mergeAll = foldr1 xmerge
