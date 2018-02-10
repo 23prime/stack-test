@@ -1,4 +1,6 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification
+           , ScopedTypeVariables
+#-}
 
 module Polynomial where
 

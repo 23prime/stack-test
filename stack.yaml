@@ -10,6 +10,7 @@ extra-deps:
 - hmatrix-gsl-0.18.0.1
 - hmatrix-special-0.4.0.1
 - hmatrix-glpk-0.6.0.0
+- ref-mtl-0.2
 
 flags: {}
 

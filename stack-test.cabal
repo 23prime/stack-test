@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib, MyPrelude, ModifyTwit, IOAction, Practice, Algebra, Random, Binary
+  exposed-modules:     MyPrelude
   build-depends:       base >= 4.7 && < 5
                      , hmatrix
                      , mtl
@@ -26,6 +26,9 @@ library
                      , free
                      , containers
                      , ghc
+                     , array
+                     , free
+                     , process
   default-language:    Haskell2010
 
 executable stack-test-exe

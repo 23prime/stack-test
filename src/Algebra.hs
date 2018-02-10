@@ -31,12 +31,10 @@ class Ring r => EuclidRing r where
 
 class Num k => Field k where
   fRecip :: k -> Maybe k
+  order  :: k -> Integer
 
 newtype F (p :: Nat) = F Integer
   deriving (Eq, Ord)
-
---characteristic :: KnownNat p => F p -> Integer
---characteristic = natVal
 
 mkF :: KnownNat p => Integer -> F p
 mkF n
@@ -67,6 +65,7 @@ instance KnownNat p => Field (F p) where
     where
       (_, s, _) = eea m p
       p = natVal a
+  order a@(F m) = natVal a
 
 instance KnownNat p => Enum (F p) where
   succ (F m)     = mkF $ succ m
@@ -76,7 +75,7 @@ instance KnownNat p => Enum (F p) where
     | isPrime p = fromInteger $ m `mod` p
     | otherwise = undefined    
     where
-      p = natVal a
+      p = order a
 
 instance KnownNat p => Real (F p) where
   toRational (F m) = toRational m
@@ -87,10 +86,10 @@ instance KnownNat p => Integral (F p) where
     | otherwise           = let (_, s, _) = eea n p
                             in  mkF $ m * s
     where
-      p = natVal a
-  rem _ _ = F 0
+      p = order a
+  _ `rem` _ = F 0
   div = quot
-  mod _ _ = F 0
+  _ `mod` _ = F 0
   (F m) `quotRem` (F n) = ((F m) `quot` (F n), F 0)
   divMod = quotRem
   toInteger (F m) = m

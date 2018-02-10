@@ -14,8 +14,7 @@ import Random (mkRandom)
 main :: IO ()
 main = mkRandom
   
-
-{- EEA のやつ
+{- evaluate EEA
 main = do
   print $ s * a + t * b
   where
